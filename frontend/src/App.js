@@ -6,6 +6,9 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import LandingPage from './components/common/LandingPage';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import AdminDashboard from './modules/admin/AdminDashboard';
+import DoctorDashboard from './modules/doctor/DoctorDashboard';
+import PatientDashboard from './modules/patient/PatientDashboard';
 import { APP_CONFIG } from './config/appConfig';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -28,31 +31,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   return children;
 };
-
-// Placeholder Dashboard Components (will be built in next commits)
-const AdminDashboard = () => (
-  <div style={{ padding: '50px', textAlign: 'center' }}>
-    <h1>👨‍💼 Admin Dashboard</h1>
-    <p>Manage doctors, patients, appointments, and reports</p>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const DoctorDashboard = () => (
-  <div style={{ padding: '50px', textAlign: 'center' }}>
-    <h1>👨‍⚕️ Doctor Dashboard</h1>
-    <p>View appointments, patients, and prescriptions</p>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const PatientDashboard = () => (
-  <div style={{ padding: '50px', textAlign: 'center' }}>
-    <h1>🏥 Patient Dashboard</h1>
-    <p>Book appointments, view prescriptions, and medical records</p>
-    <p>Coming soon...</p>
-  </div>
-);
 
 function App() {
   return (
