@@ -1,0 +1,250 @@
+/* Landing Page Styles */
+.landing-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 100px 20px;
+  text-align: center;
+}
+
+.hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  animation: fadeInDown 0.8s ease;
+}
+
+.hero-subtitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  animation: fadeInDown 1s ease;
+}
+
+.hero-description {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  opacity: 0.95;
+  animation: fadeInDown 1.2s ease;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1.4s ease;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 15px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: white;
+  color: #667eea;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  display: inline-block;
+}
+
+.btn-secondary:hover {
+  background: white;
+  color: #667eea;
+  transform: translateY(-3px);
+}
+
+/* Features Section */
+.features-section {
+  padding: 80px 20px;
+  background: white;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 50px;
+}
+
+.features-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.feature-card {
+  background: #f8f9fa;
+  padding: 40px 30px;
+  border-radius: 15px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.feature-card ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+.feature-card li {
+  padding: 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.feature-card li:before {
+  content: '✓ ';
+  color: #667eea;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Benefits Section */
+.benefits-section {
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.benefits-section .section-title {
+  color: white;
+}
+
+.benefits-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.benefit-item {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.benefit-icon {
+  font-size: 50px;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.benefit-item h4 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.benefit-item p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Footer */
+.landing-footer {
+  background: #2c3e50;
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.landing-footer p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+}
