@@ -25,6 +25,30 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
+      {/* Navigation Header */}
+      <nav className="landing-nav">
+        <div className="nav-container">
+          <Link to="/" className="nav-logo">
+            🏥 Hospital Management System
+          </Link>
+          <div className="nav-links">
+            <Link to="/about">About</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/help">Help</Link>
+            {isAuthenticated ? (
+              <button className="nav-btn" onClick={handleGetStarted}>
+                Dashboard
+              </button>
+            ) : (
+              <>
+                <Link to="/login" className="nav-btn-link">Login</Link>
+                <Link to="/register" className="nav-btn-register">Register</Link>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
@@ -117,6 +141,13 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="landing-footer">
+        <div className="footer-links">
+          <Link to="/about">About Us</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/help">Help Center</Link>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
+        </div>
         <p>&copy; 2025 Hospital Management System. All rights reserved.</p>
         <p>Built with ❤️ for better healthcare</p>
       </footer>

@@ -9,6 +9,11 @@ import Register from './components/auth/Register';
 import AdminDashboard from './modules/admin/AdminDashboard';
 import DoctorDashboard from './modules/doctor/DoctorDashboard';
 import PatientDashboard from './modules/patient/PatientDashboard';
+import About from './components/common/About';
+import Contact from './components/common/Contact';
+import HelpCenter from './components/common/HelpCenter';
+import PrivacyPolicy from './components/common/PrivacyPolicy';
+import TermsOfService from './components/common/TermsOfService';
 import { APP_CONFIG } from './config/appConfig';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -43,6 +48,11 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/help" element={<HelpCenter />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
 
               {/* Protected Admin Routes */}
               <Route

@@ -4,6 +4,100 @@
   background: #f8f9fa;
 }
 
+/* Navigation Header */
+.landing-nav {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nav-logo:hover {
+  color: #764ba2;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.nav-links a {
+  color: #555;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #667eea;
+}
+
+.nav-btn,
+.nav-btn-link,
+.nav-btn-register {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-btn {
+  background: #667eea;
+  color: white;
+}
+
+.nav-btn:hover {
+  background: #764ba2;
+  transform: translateY(-2px);
+}
+
+.nav-btn-link {
+  background: transparent;
+  color: #667eea;
+  border: 2px solid #667eea;
+  display: inline-block;
+}
+
+.nav-btn-link:hover {
+  background: #667eea;
+  color: white;
+}
+
+.nav-btn-register {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: inline-block;
+}
+
+.nav-btn-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 /* Hero Section */
 .hero-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -193,6 +287,26 @@
   color: white;
   text-align: center;
   padding: 30px 20px;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #3498db;
+  text-decoration: underline;
 }
 
 .landing-footer p {
