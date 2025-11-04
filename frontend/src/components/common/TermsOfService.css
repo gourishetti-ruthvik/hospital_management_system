@@ -16,12 +16,14 @@
   margin: 0 0 15px 0;
   font-size: 36px;
   font-weight: 700;
+  color: white;
 }
 
 .terms-header p {
   margin: 0 0 20px 0;
   font-size: 18px;
-  opacity: 0.9;
+  color: white;
+  opacity: 0.95;
 }
 
 .date-info {
@@ -55,7 +57,7 @@
   border-radius: 12px 12px 0 0;
   font-size: 15px;
   font-weight: 600;
-  color: #666;
+  color: #495057;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
@@ -104,21 +106,23 @@
 
 .term-section h2 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #212529;
   font-size: 26px;
+  font-weight: 600;
   padding-bottom: 10px;
   border-bottom: 2px solid #667eea;
 }
 
 .term-section h3 {
   margin: 20px 0 15px 0;
-  color: #555;
+  color: #212529;
   font-size: 18px;
+  font-weight: 600;
 }
 
 .term-section p {
   margin: 0 0 15px 0;
-  color: #666;
+  color: #495057;
   font-size: 15px;
   line-height: 1.8;
 }
@@ -253,13 +257,15 @@
 
 .right-card h3 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #212529;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .right-card p {
   margin: 0;
   font-size: 13px;
+  color: #495057;
 }
 
 /* Responsibilities List */
@@ -294,13 +300,15 @@
 
 .responsibility-item h3 {
   margin: 0 0 8px 0;
-  color: #333;
+  color: #212529;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .responsibility-item p {
   margin: 0;
   font-size: 14px;
+  color: #495057;
 }
 
 /* Warning Banner */

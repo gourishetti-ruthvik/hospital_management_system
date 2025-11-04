@@ -16,12 +16,14 @@
   margin: 0 0 15px 0;
   font-size: 36px;
   font-weight: 700;
+  color: white;
 }
 
 .privacy-header p {
   margin: 0 0 20px 0;
   font-size: 18px;
-  opacity: 0.9;
+  color: white;
+  opacity: 0.95;
 }
 
 .last-updated {
@@ -70,8 +72,9 @@
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #666;
+  color: #495057;
   font-size: 14px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -116,13 +119,14 @@
 
 .content-section h2 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #212529;
   font-size: 28px;
+  font-weight: 600;
 }
 
 .content-section p {
   margin: 0 0 15px 0;
-  color: #666;
+  color: #495057;
   font-size: 15px;
   line-height: 1.8;
 }
@@ -205,14 +209,15 @@
 
 .usage-card h4 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #212529;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .usage-card p {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #495057;
 }
 
 /* Sharing List */

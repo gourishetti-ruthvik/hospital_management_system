@@ -14,6 +14,7 @@ import Contact from './components/common/Contact';
 import HelpCenter from './components/common/HelpCenter';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
+import ErrorPage from './components/common/ErrorPage';
 import { APP_CONFIG } from './config/appConfig';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -84,8 +85,8 @@ function App() {
                 }
               />
 
-              {/* Fallback Route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Fallback Route - 404 Page */}
+              <Route path="*" element={<ErrorPage />} />
             </Routes>
           </div>
         </AuthProvider>

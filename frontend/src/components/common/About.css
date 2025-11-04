@@ -20,12 +20,14 @@
   margin: 0 0 20px 0;
   font-size: 42px;
   font-weight: 700;
+  color: white;
 }
 
 .hero-subtitle {
   margin: 0 0 20px 0;
   font-size: 24px;
   font-weight: 500;
+  color: white;
   opacity: 0.95;
 }
 
@@ -33,7 +35,8 @@
   margin: 0;
   font-size: 18px;
   line-height: 1.6;
-  opacity: 0.9;
+  color: white;
+  opacity: 0.95;
 }
 
 /* Stats Section */
@@ -67,7 +70,7 @@
 
 .stat-label {
   font-size: 16px;
-  color: #666;
+  color: #212529;
   font-weight: 600;
 }
 
@@ -101,14 +104,15 @@
 .mission-card h2,
 .vision-card h2 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: #212529;
   font-size: 28px;
+  font-weight: 600;
 }
 
 .mission-card p,
 .vision-card p {
   margin: 0;
-  color: #666;
+  color: #495057;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -122,13 +126,14 @@
 
 .features-section h2 {
   margin: 0 0 15px 0;
-  color: #333;
+  color: #212529;
   font-size: 36px;
+  font-weight: 600;
 }
 
 .section-subtitle {
   margin: 0 0 50px 0;
-  color: #666;
+  color: #495057;
   font-size: 18px;
 }
 
@@ -157,17 +162,18 @@
   margin-bottom: 15px;
 }
 
-.feature-card h3 {
+.feature-card h4 {
   margin: 0 0 10px 0;
-  color: #333;
-  font-size: 20px;
+  color: #212529;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .feature-card p {
   margin: 0;
-  color: #666;
+  color: #495057;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* Team Section */
@@ -179,8 +185,9 @@
 
 .team-section h2 {
   margin: 0 0 15px 0;
-  color: #333;
+  color: #212529;
   font-size: 36px;
+  font-weight: 600;
 }
 
 .team-grid {
@@ -210,8 +217,9 @@
 
 .team-card h3 {
   margin: 0 0 8px 0;
-  color: #333;
+  color: #212529;
   font-size: 20px;
+  font-weight: 600;
 }
 
 .team-role {
@@ -223,7 +231,7 @@
 
 .team-specialty {
   margin: 0;
-  color: #999;
+  color: #6c757d;
   font-size: 13px;
 }
 
@@ -236,8 +244,9 @@
 
 .values-section h2 {
   margin: 0 0 50px 0;
-  color: #333;
+  color: #212529;
   font-size: 36px;
+  font-weight: 600;
 }
 
 .values-grid {
