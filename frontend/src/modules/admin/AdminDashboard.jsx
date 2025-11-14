@@ -54,7 +54,12 @@ const AdminDashboard = () => {
         <div className="header-content">
           <h1>🏥 Admin Dashboard</h1>
           <div className="header-actions">
-            <span className="user-info">Welcome, {user?.firstName || 'Admin'}</span>
+            <div className="user-info">
+              <div className="user-details">
+                <span className="user-name">Welcome, {user?.fullName || user?.username || 'Admin'}</span>
+                <span className="user-email">{user?.email}</span>
+              </div>
+            </div>
             <button className="logout-btn" onClick={handleLogout}>
               Logout
             </button>

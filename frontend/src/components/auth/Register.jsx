@@ -1,24 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { APP_CONFIG } from '../../config/appConfig';
-import { isValidEmail, isValidPhone } from '../../utils/helpers';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/apiConfig';
 import './Auth.css';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
+    username: '',
     email: '',
-    phone: '',
+    age: '',
     password: '',
     confirmPassword: '',
-    role: 'PATIENT', // Default role
-    specialization: '', // For doctors only
-    address: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -44,24 +39,29 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
     }
 
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
     }
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!isValidEmail(formData.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!isValidPhone(formData.phone)) {
-      newErrors.phone = 'Phone must be 10 digits';
+    if (!formData.age) {
+      newErrors.age = 'Age is required';
+    } else {
+      const ageNum = parseInt(formData.age);
+      if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+        newErrors.age = 'Age must be between 1 and 120';
+      }
     }
 
     if (!formData.password) {
@@ -72,10 +72,6 @@ const Register = () => {
 
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (formData.role === 'DOCTOR' && !formData.specialization.trim()) {
-      newErrors.specialization = 'Specialization is required for doctors';
     }
 
     setErrors(newErrors);
@@ -95,16 +91,55 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Remove confirmPassword before sending to API
-      const { confirmPassword, ...registerData } = formData;
-      await register(registerData);
+      // Send only required fields (confirmPassword is only for frontend validation)
+      const registerData = {
+        name: formData.name,
+        username: formData.username,
+        email: formData.email,
+        age: parseInt(formData.age),
+        password: formData.password
+      };
       
-      setSuccessMessage('Registration successful! Redirecting to login...');
+      console.log('Sending registration data:', registerData);
+      
+      const response = await axios.post(
+        API_ENDPOINTS.AUTH.REGISTER,
+        registerData
+      );
+      
+      console.log('Registration response:', response.data);
+      
+      setSuccessMessage(response.data.message || 'Registration successful! Redirecting to login...');
+      
+      // Clear form on success
+      setFormData({
+        name: '',
+        username: '',
+        email: '',
+        age: '',
+        password: '',
+        confirmPassword: '',
+      });
+      
+      // Only redirect after successful registration
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (error) {
-      setApiError(error.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', error);
+      
+      // Handle different error scenarios
+      if (error.response) {
+        // Server responded with error
+        const errorMessage = error.response.data.message || error.response.data || 'Registration failed';
+        setApiError(errorMessage);
+      } else if (error.request) {
+        // Request made but no response
+        setApiError('Cannot connect to server. Please check if the backend is running.');
+      } else {
+        // Other errors
+        setApiError(error.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -132,45 +167,31 @@ const Register = () => {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="role">Register As</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
+            <label htmlFor="name">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
+              placeholder="Enter your full name"
               disabled={loading}
-            >
-              <option value="PATIENT">Patient</option>
-              <option value="DOCTOR">Doctor</option>
-            </select>
+            />
+            {errors.name && <span className="error-text">{errors.name}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
+            <label htmlFor="username">Username</label>
             <input
               type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Enter first name"
+              placeholder="Enter username (min 3 characters)"
               disabled={loading}
             />
-            {errors.firstName && <span className="error-text">{errors.firstName}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Enter last name"
-              disabled={loading}
-            />
-            {errors.lastName && <span className="error-text">{errors.lastName}</span>}
+            {errors.username && <span className="error-text">{errors.username}</span>}
           </div>
 
           <div className="form-group">
@@ -181,54 +202,26 @@ const Register = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter email"
+              placeholder="Enter your email"
               disabled={loading}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
+            <label htmlFor="age">Age</label>
             <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
+              type="number"
+              id="age"
+              name="age"
+              value={formData.age}
               onChange={handleChange}
-              placeholder="10-digit phone number"
-              maxLength="10"
+              placeholder="Enter your age (1-120)"
+              min="1"
+              max="120"
               disabled={loading}
             />
-            {errors.phone && <span className="error-text">{errors.phone}</span>}
-          </div>
-
-          {formData.role === 'DOCTOR' && (
-            <div className="form-group">
-              <label htmlFor="specialization">Specialization</label>
-              <input
-                type="text"
-                id="specialization"
-                name="specialization"
-                value={formData.specialization}
-                onChange={handleChange}
-                placeholder="e.g., Cardiology, Neurology"
-                disabled={loading}
-              />
-              {errors.specialization && <span className="error-text">{errors.specialization}</span>}
-            </div>
-          )}
-
-          <div className="form-group">
-            <label htmlFor="address">Address</label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter address"
-              disabled={loading}
-            />
+            {errors.age && <span className="error-text">{errors.age}</span>}
           </div>
 
           <div className="form-group">

@@ -77,7 +77,12 @@ const DoctorDashboard = () => {
         <div className="header-content">
           <h1>👨‍⚕️ Doctor Dashboard</h1>
           <div className="header-actions">
-            <span className="user-info">Dr. {user?.firstName || 'Doctor'}</span>
+            <div className="user-info">
+              <div className="user-details">
+                <span className="user-name">Dr. {user?.fullName || user?.username || 'Doctor'}</span>
+                <span className="user-email">{user?.email}</span>
+              </div>
+            </div>
             <button className="logout-btn" onClick={handleLogout}>
               Logout
             </button>

@@ -9,7 +9,7 @@ const Login = () => {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
@@ -35,10 +35,8 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
     }
 
     if (!formData.password) {
@@ -63,21 +61,31 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log('Sending login data:', formData);
+      
+      // Use AuthContext login method
       const response = await login(formData);
-      const userRole = response.role;
+      
+      console.log('Login response:', response);
+      
+      const { role } = response;
 
       // Redirect based on role
-      if (userRole === APP_CONFIG.ROLES.ADMIN) {
+      if (role === APP_CONFIG.ROLES.ADMIN) {
         navigate(APP_CONFIG.ROUTES.ADMIN_DASHBOARD);
-      } else if (userRole === APP_CONFIG.ROLES.DOCTOR) {
+      } else if (role === APP_CONFIG.ROLES.DOCTOR) {
         navigate(APP_CONFIG.ROUTES.DOCTOR_DASHBOARD);
-      } else if (userRole === APP_CONFIG.ROLES.PATIENT) {
+      } else if (role === APP_CONFIG.ROLES.PATIENT) {
         navigate(APP_CONFIG.ROUTES.PATIENT_DASHBOARD);
       } else {
         navigate('/');
       }
     } catch (error) {
-      setApiError(error.message || 'Login failed. Please check your credentials.');
+      console.error('Login error:', error);
+      
+      // Handle different error scenarios
+      const errorMessage = error.message || 'Login failed. Please check your credentials.';
+      setApiError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -99,17 +107,17 @@ const Login = () => {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="username">Username</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="Enter your username"
               disabled={loading}
             />
-            {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.username && <span className="error-text">{errors.username}</span>}
           </div>
 
           <div className="form-group">
