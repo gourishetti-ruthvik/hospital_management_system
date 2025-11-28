@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import apiClient from '../../services/apiClient';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import DataTable from '../../components/common/DataTable';
 import './DoctorPatients.css';
 
@@ -13,44 +17,37 @@ const DoctorPatients = () => {
     loadPatients();
   }, []);
 
-  const loadPatients = () => {
+  const loadPatients = async () => {
     setLoading(true);
-    // Simulated data - will be replaced with API call in Phase 3
-    setTimeout(() => {
-      setPatients([
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1234567890',
-          age: 35,
-          bloodGroup: 'O+',
-          lastVisit: '2024-01-10',
-          status: 'Active',
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          phone: '+1234567891',
-          age: 28,
-          bloodGroup: 'A+',
-          lastVisit: '2024-01-12',
-          status: 'Active',
-        },
-        {
-          id: 3,
-          name: 'Robert Johnson',
-          email: 'robert@example.com',
-          phone: '+1234567892',
-          age: 42,
-          bloodGroup: 'B+',
-          lastVisit: '2024-01-08',
-          status: 'Inactive',
-        },
-      ]);
+    try {
+      // Get all appointments for this doctor
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR);
+      const appointments = Array.isArray(response.data) ? response.data : [];
+      
+      // Extract unique patients from appointments
+      const uniquePatientsMap = new Map();
+      appointments.forEach(apt => {
+        if (apt.patient && !uniquePatientsMap.has(apt.patient.id)) {
+          uniquePatientsMap.set(apt.patient.id, {
+            id: apt.patient.id,
+            name: apt.patient.user?.fullName || apt.patient.user?.username || 'Unknown',
+            email: apt.patient.user?.email || 'N/A',
+            phone: apt.patient.phoneNumber || 'N/A',
+            age: apt.patient.age || 'N/A',
+            bloodGroup: apt.patient.bloodGroup || 'N/A',
+            lastVisit: apt.appointmentDate ? new Date(apt.appointmentDate).toLocaleDateString() : 'N/A',
+            status: 'Active',
+          });
+        }
+      });
+      
+      setPatients(Array.from(uniquePatientsMap.values()));
+    } catch (error) {
+      console.error('Error loading patients:', error);
+      setPatients([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const filteredPatients = patients.filter(patient =>
@@ -114,8 +111,17 @@ const DoctorPatients = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading patients..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <div className="doctor-patients">
+    <DashboardLayout>
+      <div className="doctor-patients">
       <div className="page-header">
         <h1>👥 My Patients</h1>
       </div>
@@ -167,6 +173,7 @@ const DoctorPatients = () => {
         />
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

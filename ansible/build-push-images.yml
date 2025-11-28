@@ -1,0 +1,69 @@
+---
+- name: Build and Push Docker Images
+  hosts: local
+  gather_facts: yes
+  vars_files:
+    - group_vars/all.yml
+  
+  tasks:
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if Docker is not installed
+      fail:
+        msg: "Docker is not installed. Please install Docker first."
+      when: docker_check.rc != 0
+
+    - name: Login to Docker Hub
+      docker_login:
+        username: "{{ dockerhub_username }}"
+        password: "{{ dockerhub_password }}"
+      no_log: true
+
+    - name: Build Frontend Docker Image
+      docker_image:
+        name: "{{ frontend_image }}"
+        tag: "{{ image_tag }}"
+        source: build
+        build:
+          path: "../frontend"
+          dockerfile: Dockerfile
+        push: yes
+      register: frontend_build
+
+    - name: Display Frontend build result
+      debug:
+        msg: "Frontend image built and pushed: {{ frontend_image }}:{{ image_tag }}"
+
+    - name: Build Backend Docker Image
+      docker_image:
+        name: "{{ backend_image }}"
+        tag: "{{ image_tag }}"
+        source: build
+        build:
+          path: "../backend"
+          dockerfile: Dockerfile
+        push: yes
+      register: backend_build
+
+    - name: Display Backend build result
+      debug:
+        msg: "Backend image built and pushed: {{ backend_image }}:{{ image_tag }}"
+
+    - name: Tag images with version (optional)
+      docker_image:
+        name: "{{ item.image }}"
+        tag: "{{ image_tag }}"
+        repository: "{{ item.image }}"
+        push: yes
+        source: local
+      loop:
+        - { image: "{{ frontend_image }}" }
+        - { image: "{{ backend_image }}" }
+      when: image_tag != "latest"
+
+    - name: Docker logout
+      command: docker logout

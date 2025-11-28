@@ -7,17 +7,40 @@ const authService = {
   // User login
   login: async (credentials) => {
     try {
+      console.log('Attempting login with:', { username: credentials.username });
       const response = await apiClient.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      console.log('Login response received:', response.data);
+      
       const { token, user, role } = response.data;
+      
+      if (!token) {
+        throw { message: 'No token received from server' };
+      }
+      
+      if (!role) {
+        throw { message: 'No role received from server' };
+      }
       
       // Store authentication data in localStorage
       localStorage.setItem(APP_CONFIG.STORAGE_KEYS.TOKEN, token);
       localStorage.setItem(APP_CONFIG.STORAGE_KEYS.USER, JSON.stringify(user));
       localStorage.setItem(APP_CONFIG.STORAGE_KEYS.ROLE, role);
       
+      console.log('Login successful, stored:', { role, username: user?.username });
+      
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
+      console.error('Login error details:', error);
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        throw error.response.data || { message: 'Login failed' };
+      } else if (error.request) {
+        console.error('No response from server');
+        throw { message: 'Cannot connect to server. Please check if the backend is running.' };
+      } else {
+        console.error('Error:', error.message);
+        throw error;
+      }
     }
   },
 

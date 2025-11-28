@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import patientService from '../../services/patientService';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './BookAppointment.css';
 
 const BookAppointment = () => {
@@ -10,42 +12,27 @@ const BookAppointment = () => {
     date: '',
     time: '',
     reason: '',
+    symptoms: '',
   });
   const [loading, setLoading] = useState(false);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     loadDoctors();
   }, []);
 
-  const loadDoctors = () => {
-    // Simulated data - will be replaced with API call in Phase 3
-    setDoctors([
-      {
-        id: 1,
-        name: 'Dr. Sarah Johnson',
-        specialization: 'Cardiologist',
-        available: true,
-      },
-      {
-        id: 2,
-        name: 'Dr. Michael Brown',
-        specialization: 'Dermatologist',
-        available: true,
-      },
-      {
-        id: 3,
-        name: 'Dr. Emily Davis',
-        specialization: 'Pediatrician',
-        available: false,
-      },
-      {
-        id: 4,
-        name: 'Dr. James Wilson',
-        specialization: 'Orthopedic',
-        available: true,
-      },
-    ]);
+  const loadDoctors = async () => {
+    setLoadingDoctors(true);
+    try {
+      const response = await patientService.getAllDoctors();
+      setDoctors(response);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+      setMessage({ type: 'error', text: 'Failed to load doctors. Please try again.' });
+    } finally {
+      setLoadingDoctors(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -53,20 +40,30 @@ const BookAppointment = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.doctorId || !formData.date || !formData.time || !formData.reason) {
-      setMessage({ type: 'error', text: 'Please fill all fields' });
+      setMessage({ type: 'error', text: 'Please fill all required fields' });
       return;
     }
 
     setLoading(true);
     
-    // Simulated API call - will be replaced in Phase 3
-    setTimeout(() => {
+    try {
+      // Combine date and time into a single DateTime
+      const appointmentDateTime = new Date(`${formData.date}T${formData.time}`);
+      
+      const appointmentData = {
+        doctorId: parseInt(formData.doctorId),
+        appointmentDate: appointmentDateTime.toISOString(),
+        reasonForVisit: formData.reason,
+        symptoms: formData.symptoms || '',
+        durationMinutes: 30,
+      };
+      
+      await patientService.bookAppointment(appointmentData);
       setMessage({ type: 'success', text: 'Appointment booked successfully!' });
-      setLoading(false);
       
       // Reset form
       setFormData({
@@ -74,43 +71,76 @@ const BookAppointment = () => {
         date: '',
         time: '',
         reason: '',
+        symptoms: '',
       });
       
       // Clear message after 3 seconds
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-    }, 1000);
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.message || 'Failed to book appointment. Please try again.' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const availableDoctors = doctors.filter(doc => doc.available);
 
   return (
-    <div className="book-appointment">
+    <DashboardLayout>
+      <div className="book-appointment">
       <div className="page-header">
-        <h1>📅 Book Appointment</h1>
-        <p>Schedule an appointment with your preferred doctor</p>
+        <div>
+          <h1>📅 Book Appointment</h1>
+          <p>Schedule an appointment with your preferred doctor</p>
+        </div>
+        <button 
+          className="back-btn" 
+          onClick={() => window.history.back()}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back
+        </button>
       </div>
 
       <div className="appointment-container">
         <div className="doctors-list">
           <h2>Available Doctors</h2>
-          <div className="doctors-grid">
-            {availableDoctors.map(doctor => (
-              <div
-                key={doctor.id}
-                className={`doctor-card ${formData.doctorId === doctor.id.toString() ? 'selected' : ''}`}
-                onClick={() => setFormData(prev => ({ ...prev, doctorId: doctor.id.toString() }))}
-              >
-                <div className="doctor-icon">👨‍⚕️</div>
-                <div className="doctor-info">
-                  <h3>{doctor.name}</h3>
-                  <p>{doctor.specialization}</p>
-                  <span className="availability-badge">
-                    ✅ Available
-                  </span>
+          {loadingDoctors ? (
+            <p>Loading doctors...</p>
+          ) : availableDoctors.length === 0 ? (
+            <p>No doctors available at the moment.</p>
+          ) : (
+            <div className="doctors-grid">
+              {availableDoctors.map(doctor => (
+                <div
+                  key={doctor.id}
+                  className={`doctor-card ${formData.doctorId === doctor.id.toString() ? 'selected' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, doctorId: doctor.id.toString() }))}
+                >
+                  <div className="doctor-icon">👨‍⚕️</div>
+                  <div className="doctor-info">
+                    <h3>Dr. {doctor.fullName || 'Unknown'}</h3>
+                    <p>{doctor.specialization}</p>
+                    <p className="fee">Fee: ₹{doctor.consultationFee}</p>
+                    <span className="availability-badge">
+                      ✅ Available
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="booking-form">
@@ -134,7 +164,7 @@ const BookAppointment = () => {
                 <option value="">-- Choose a doctor --</option>
                 {availableDoctors.map(doctor => (
                   <option key={doctor.id} value={doctor.id}>
-                    {doctor.name} - {doctor.specialization}
+                    Dr. {doctor.fullName || 'Unknown'} - {doctor.specialization}
                   </option>
                 ))}
               </select>
@@ -154,20 +184,13 @@ const BookAppointment = () => {
 
             <div className="form-group">
               <label>Preferred Time *</label>
-              <select
+              <input
+                type="time"
                 name="time"
                 value={formData.time}
                 onChange={handleInputChange}
                 required
-              >
-                <option value="">-- Select time --</option>
-                <option value="09:00 AM">09:00 AM</option>
-                <option value="10:00 AM">10:00 AM</option>
-                <option value="11:00 AM">11:00 AM</option>
-                <option value="02:00 PM">02:00 PM</option>
-                <option value="03:00 PM">03:00 PM</option>
-                <option value="04:00 PM">04:00 PM</option>
-              </select>
+              />
             </div>
 
             <div className="form-group">
@@ -176,9 +199,20 @@ const BookAppointment = () => {
                 name="reason"
                 value={formData.reason}
                 onChange={handleInputChange}
-                rows="4"
-                placeholder="Describe your symptoms or reason for consultation..."
+                rows="3"
+                placeholder="Describe the reason for consultation..."
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Symptoms</label>
+              <textarea
+                name="symptoms"
+                value={formData.symptoms}
+                onChange={handleInputChange}
+                rows="3"
+                placeholder="Describe your symptoms (optional)..."
               />
             </div>
 
@@ -189,6 +223,7 @@ const BookAppointment = () => {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

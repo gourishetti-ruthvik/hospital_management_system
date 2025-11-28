@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: hospital-system
+data:
+  MYSQL_DATABASE: "hospital_db"
+  MYSQL_ROOT_PASSWORD: "root123"
+  MYSQL_USER: "hospital_user"
+  MYSQL_PASSWORD: "hospital_pass"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: hospital-system
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/hospital_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_USERNAME: "hospital_user"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SERVER_PORT: "8080"
+  JWT_EXPIRATION: "86400000"
+  CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost,http://localhost:30085,http://localhost:80"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: hospital-system
+data:
+  REACT_APP_API_BASE_URL: ""

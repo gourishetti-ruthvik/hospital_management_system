@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import patientService from '../../services/patientService';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './FindDoctors.css';
 
 const FindDoctors = () => {
@@ -11,6 +13,7 @@ const FindDoctors = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadDoctors();
@@ -20,80 +23,31 @@ const FindDoctors = () => {
     filterDoctors();
   }, [searchTerm, selectedSpecialization, doctors]);
 
-  const loadDoctors = () => {
+  const loadDoctors = async () => {
     setLoading(true);
-    // Simulated data - will be replaced with API call in Phase 3
-    setTimeout(() => {
-      setDoctors([
-        {
-          id: 1,
-          name: 'Dr. Sarah Johnson',
-          specialization: 'Cardiology',
-          experience: 15,
-          rating: 4.8,
-          consultationFee: 500,
-          available: true,
-          education: 'MBBS, MD - Cardiology',
-          hospital: 'City Medical Center',
-        },
-        {
-          id: 2,
-          name: 'Dr. Michael Brown',
-          specialization: 'Dermatology',
-          experience: 10,
-          rating: 4.6,
-          consultationFee: 400,
-          available: true,
-          education: 'MBBS, MD - Dermatology',
-          hospital: 'Skin Care Clinic',
-        },
-        {
-          id: 3,
-          name: 'Dr. Emily Davis',
-          specialization: 'Pediatrics',
-          experience: 12,
-          rating: 4.9,
-          consultationFee: 450,
-          available: false,
-          education: 'MBBS, MD - Pediatrics',
-          hospital: 'Children Hospital',
-        },
-        {
-          id: 4,
-          name: 'Dr. James Wilson',
-          specialization: 'Orthopedics',
-          experience: 20,
-          rating: 4.7,
-          consultationFee: 600,
-          available: true,
-          education: 'MBBS, MS - Orthopedics',
-          hospital: 'Bone & Joint Center',
-        },
-        {
-          id: 5,
-          name: 'Dr. Lisa Anderson',
-          specialization: 'Neurology',
-          experience: 18,
-          rating: 4.8,
-          consultationFee: 700,
-          available: true,
-          education: 'MBBS, DM - Neurology',
-          hospital: 'Neuro Care Hospital',
-        },
-        {
-          id: 6,
-          name: 'Dr. Robert Martinez',
-          specialization: 'Cardiology',
-          experience: 14,
-          rating: 4.5,
-          consultationFee: 550,
-          available: true,
-          education: 'MBBS, MD - Cardiology',
-          hospital: 'Heart Institute',
-        },
-      ]);
+    setError('');
+    try {
+      const data = await patientService.getAllDoctors();
+      // Transform API data to match component format
+      const formattedDoctors = data.map(doc => ({
+        id: doc.id,
+        name: doc.fullName || 'Dr. Unknown',
+        specialization: doc.specialization,
+        experience: doc.experience || 0,
+        rating: 4.5, // Default rating as it's not in the entity
+        consultationFee: doc.consultationFee,
+        available: doc.available,
+        education: doc.qualification || 'MBBS',
+        hospital: doc.department || 'General Hospital',
+      }));
+      setDoctors(formattedDoctors);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+      setError('Failed to load doctors. Please try again.');
+      setDoctors([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const filterDoctors = () => {
@@ -133,10 +87,27 @@ const FindDoctors = () => {
   };
 
   return (
-    <div className="find-doctors">
+    <DashboardLayout>
+      <div className="find-doctors">
       <div className="page-header">
-        <h1>👨‍⚕️ Find Doctors</h1>
-        <p>Search and book appointments with our expert doctors</p>
+        <div>
+          <h1>👨‍⚕️ Find Doctors</h1>
+          <p>Search and book appointments with our expert doctors</p>
+        </div>
+        <button 
+          className="back-btn" 
+          onClick={() => navigate('/patient/dashboard')}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Dashboard
+        </button>
       </div>
 
       <div className="search-filter-section">
@@ -241,6 +212,7 @@ const FindDoctors = () => {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 };
 

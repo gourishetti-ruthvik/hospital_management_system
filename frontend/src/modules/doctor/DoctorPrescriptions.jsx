@@ -1,68 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import apiClient from '../../services/apiClient';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './DoctorPrescriptions.css';
 
 const DoctorPrescriptions = () => {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [patients, setPatients] = useState([]);
   const [formData, setFormData] = useState({
     patientId: '',
     diagnosis: '',
-    medications: '',
+    medicationName: '',
+    dosage: '',
+    frequency: '',
+    duration: '',
     instructions: '',
-    followUpDate: '',
+    active: true,
   });
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 1,
-      patientName: 'John Doe',
-      diagnosis: 'Viral Fever',
-      date: '2024-01-10',
-      medications: 'Paracetamol 500mg, Azithromycin 250mg',
-    },
-    {
-      id: 2,
-      patientName: 'Jane Smith',
-      diagnosis: 'Hypertension',
-      date: '2024-01-12',
-      medications: 'Amlodipine 5mg, Losartan 50mg',
-    },
-  ]);
+  const [prescriptions, setPrescriptions] = useState([]);
+
+  useEffect(() => {
+    loadPrescriptions();
+    loadPatients();
+  }, []);
+
+  const loadPrescriptions = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR);
+      const appointments = Array.isArray(response.data) ? response.data : [];
+      
+      // Get unique patients from appointments
+      const uniquePatients = appointments
+        .filter(apt => apt.patient)
+        .map(apt => apt.patient)
+        .filter((patient, index, self) => 
+          index === self.findIndex(p => p.id === patient.id)
+        );
+      
+      setPatients(uniquePatients);
+
+      const prescResponse = await apiClient.get(`${API_ENDPOINTS.APPOINTMENTS.BASE.replace('/appointments', '')}/prescriptions/doctor`);
+      setPrescriptions(Array.isArray(prescResponse.data) ? prescResponse.data : []);
+    } catch (error) {
+      console.error('Error loading prescriptions:', error);
+      setPrescriptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPatients = async () => {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR);
+      const appointments = Array.isArray(response.data) ? response.data : [];
+      const uniquePatients = appointments
+        .filter(apt => apt.patient)
+        .map(apt => apt.patient)
+        .filter((patient, index, self) => 
+          index === self.findIndex(p => p.id === patient.id)
+        );
+      setPatients(uniquePatients);
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const newPrescription = {
-      id: prescriptions.length + 1,
-      patientName: 'New Patient',
-      diagnosis: formData.diagnosis,
-      date: new Date().toISOString().split('T')[0],
-      medications: formData.medications,
-    };
-    
-    setPrescriptions([newPrescription, ...prescriptions]);
-    
-    // Reset form
-    setFormData({
-      patientId: '',
-      diagnosis: '',
-      medications: '',
-      instructions: '',
-      followUpDate: '',
-    });
-    setShowForm(false);
-    
-    console.log('Prescription created:', formData);
-    // API call will be added in Phase 3
+    try {
+      const prescriptionData = {
+        patient: { id: parseInt(formData.patientId) },
+        diagnosis: formData.diagnosis,
+        medicationName: formData.medicationName,
+        dosage: formData.dosage,
+        frequency: formData.frequency,
+        duration: formData.duration,
+        instructions: formData.instructions,
+        active: formData.active,
+      };
+
+      await apiClient.post(`${API_ENDPOINTS.APPOINTMENTS.BASE.replace('/appointments', '')}/prescriptions`, prescriptionData);
+      
+      // Reset form
+      setFormData({
+        patientId: '',
+        diagnosis: '',
+        medicationName: '',
+        dosage: '',
+        frequency: '',
+        duration: '',
+        instructions: '',
+        active: true,
+      });
+      setShowForm(false);
+      
+      // Reload prescriptions
+      loadPrescriptions();
+      alert('Prescription created successfully!');
+    } catch (error) {
+      console.error('Error creating prescription:', error);
+      alert('Failed to create prescription');
+    }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading prescriptions..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <div className="doctor-prescriptions">
+    <DashboardLayout>
+      <div className="doctor-prescriptions">
       <div className="page-header">
         <h1>📝 Prescriptions</h1>
         <button className="btn-new" onClick={() => setShowForm(!showForm)}>
@@ -84,20 +152,61 @@ const DoctorPrescriptions = () => {
                   required
                 >
                   <option value="">-- Select Patient --</option>
-                  <option value="1">John Doe</option>
-                  <option value="2">Jane Smith</option>
-                  <option value="3">Robert Johnson</option>
+                  {patients.map(patient => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.user?.fullName || patient.user?.username}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Follow-up Date</label>
+                <label>Medication Name *</label>
                 <input
-                  type="date"
-                  name="followUpDate"
-                  value={formData.followUpDate}
+                  type="text"
+                  name="medicationName"
+                  value={formData.medicationName}
                   onChange={handleInputChange}
-                  min={new Date().toISOString().split('T')[0]}
+                  placeholder="e.g., Paracetamol"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Dosage *</label>
+                <input
+                  type="text"
+                  name="dosage"
+                  value={formData.dosage}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 500mg"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Frequency *</label>
+                <input
+                  type="text"
+                  name="frequency"
+                  value={formData.frequency}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Twice daily"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Duration *</label>
+                <input
+                  type="text"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 7 days"
+                  required
                 />
               </div>
             </div>
@@ -115,25 +224,13 @@ const DoctorPrescriptions = () => {
             </div>
 
             <div className="form-group">
-              <label>Medications *</label>
-              <textarea
-                name="medications"
-                value={formData.medications}
-                onChange={handleInputChange}
-                rows="4"
-                placeholder="List medications with dosage (e.g., Paracetamol 500mg - 1 tablet twice daily)"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Additional Instructions</label>
+              <label>Instructions</label>
               <textarea
                 name="instructions"
                 value={formData.instructions}
                 onChange={handleInputChange}
                 rows="3"
-                placeholder="Any special instructions for the patient"
+                placeholder="Additional instructions for the patient"
               />
             </div>
 
@@ -150,6 +247,7 @@ const DoctorPrescriptions = () => {
         {prescriptions.length === 0 ? (
           <div className="empty-state">
             <p>📋 No prescriptions found</p>
+            <p>Create your first prescription using the button above</p>
           </div>
         ) : (
           <div className="prescriptions-grid">
@@ -157,25 +255,43 @@ const DoctorPrescriptions = () => {
               <div key={prescription.id} className="prescription-card">
                 <div className="prescription-header">
                   <div>
-                    <h3>{prescription.patientName}</h3>
-                    <p className="date">📅 {prescription.date}</p>
+                    <h3>👤 {prescription.patient?.user?.fullName || prescription.patient?.user?.username || 'Unknown Patient'}</h3>
+                    <p className="date">📅 {formatDate(prescription.prescriptionDate)}</p>
                   </div>
-                  <div className="prescription-actions">
-                    <button className="btn-icon" title="View">👁️</button>
-                    <button className="btn-icon" title="Edit">✏️</button>
-                    <button className="btn-icon" title="Print">🖨️</button>
-                  </div>
+                  <span className={`status-badge ${prescription.active ? 'active' : 'inactive'}`}>
+                    {prescription.active ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
                 
                 <div className="prescription-body">
                   <div className="info-row">
-                    <strong>Diagnosis:</strong>
-                    <span>{prescription.diagnosis}</span>
+                    <strong>Medication:</strong>
+                    <span>{prescription.medicationName}</span>
                   </div>
                   <div className="info-row">
-                    <strong>Medications:</strong>
-                    <span>{prescription.medications}</span>
+                    <strong>Dosage:</strong>
+                    <span>{prescription.dosage}</span>
                   </div>
+                  <div className="info-row">
+                    <strong>Frequency:</strong>
+                    <span>{prescription.frequency}</span>
+                  </div>
+                  <div className="info-row">
+                    <strong>Duration:</strong>
+                    <span>{prescription.duration}</span>
+                  </div>
+                  {prescription.diagnosis && (
+                    <div className="info-row">
+                      <strong>Diagnosis:</strong>
+                      <span>{prescription.diagnosis}</span>
+                    </div>
+                  )}
+                  {prescription.instructions && (
+                    <div className="info-row">
+                      <strong>Instructions:</strong>
+                      <span>{prescription.instructions}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -183,6 +299,7 @@ const DoctorPrescriptions = () => {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

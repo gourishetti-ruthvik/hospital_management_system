@@ -29,6 +29,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
+            System.out.println("=== Login attempt for username: " + loginRequest.getUsername() + " ===");
+            
             String jwt = authService.authenticateUser(loginRequest);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -37,6 +39,8 @@ public class AuthController {
             List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
+            
+            System.out.println("Login successful for: " + userDetails.getUsername() + " with roles: " + roles);
             
             JwtResponse response = new JwtResponse(
                 jwt,
@@ -54,8 +58,12 @@ public class AuthController {
             user.put("fullName", userDetails.getEmail()); // You can add fullName to UserDetailsImpl if needed
             response.setUser(user);
             
+            System.out.println("Sending response with token and role: " + response.getRole());
+            
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.err.println("Login failed: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                 .body(new MessageResponse("Error: Invalid username or password!"));
         }

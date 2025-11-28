@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import apiClient from '../../services/apiClient';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -11,29 +14,32 @@ const AdminDashboard = () => {
     totalDoctors: 0,
     totalPatients: 0,
     totalAppointments: 0,
-    pendingAppointments: 0,
+    totalUsers: 0,
+    activeDoctors: 0,
+    activePatients: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch dashboard statistics
     fetchDashboardStats();
   }, []);
 
   const fetchDashboardStats = async () => {
     try {
-      // Simulated data - will be replaced with API calls in Phase 3
-      setTimeout(() => {
-        setStats({
-          totalDoctors: 25,
-          totalPatients: 156,
-          totalAppointments: 89,
-          pendingAppointments: 12,
-        });
-        setLoading(false);
-      }, 1000);
+      setLoading(true);
+      const response = await apiClient.get(`${API_ENDPOINTS.ADMIN.DASHBOARD}`);
+      setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setStats({
+        totalDoctors: 0,
+        totalPatients: 0,
+        totalAppointments: 0,
+        totalUsers: 0,
+        activeDoctors: 0,
+        activePatients: 0,
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -44,13 +50,18 @@ const AdminDashboard = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading dashboard..." />;
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading dashboard..." />
+      </DashboardLayout>
+    );
   }
 
   return (
-    <div className="admin-dashboard">
-      {/* Header */}
-      <header className="dashboard-header">
+    <DashboardLayout>
+      <div className="admin-dashboard">
+        {/* Header */}
+        <header className="dashboard-header">
         <div className="header-content">
           <h1>🏥 Admin Dashboard</h1>
           <div className="header-actions">
@@ -159,7 +170,8 @@ const AdminDashboard = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

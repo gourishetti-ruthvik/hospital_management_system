@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import apiClient from '../../services/apiClient';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
@@ -20,43 +23,60 @@ const DoctorDashboard = () => {
     fetchDashboardData();
   }, []);
 
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
+    const time = new Date(`2000-01-01T${timeString}`);
+    return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
   const fetchDashboardData = async () => {
     try {
-      // Simulated data - will be replaced with API calls in Phase 3
-      setTimeout(() => {
-        setStats({
-          todayAppointments: 8,
-          totalPatients: 45,
-          pendingConsultations: 3,
-          completedToday: 5,
-        });
-        setUpcomingAppointments([
-          {
-            id: 1,
-            patientName: 'John Doe',
-            time: '10:00 AM',
-            type: 'Consultation',
-            status: 'Scheduled',
-          },
-          {
-            id: 2,
-            patientName: 'Jane Smith',
-            time: '11:30 AM',
-            type: 'Follow-up',
-            status: 'Scheduled',
-          },
-          {
-            id: 3,
-            patientName: 'Robert Johnson',
-            time: '02:00 PM',
-            type: 'Consultation',
-            status: 'Scheduled',
-          },
-        ]);
-        setLoading(false);
-      }, 1000);
+      setLoading(true);
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR);
+      const appointments = Array.isArray(response.data) ? response.data : [];
+      
+      const today = getTodayDate();
+      const todayAppts = appointments.filter(apt => 
+        apt.appointmentDate?.split('T')[0] === today
+      );
+      
+      setStats({
+        todayAppointments: todayAppts.length,
+        totalPatients: new Set(appointments.map(apt => apt.patient?.id)).size,
+        pendingConsultations: appointments.filter(apt => 
+          apt.status === 'PENDING' || apt.status === 'SCHEDULED'
+        ).length,
+        completedToday: todayAppts.filter(apt => apt.status === 'COMPLETED').length,
+      });
+
+      // Get today's appointments sorted by time
+      const upcomingToday = todayAppts
+        .sort((a, b) => a.appointmentTime?.localeCompare(b.appointmentTime))
+        .slice(0, 5)
+        .map(apt => ({
+          id: apt.id,
+          patientName: apt.patient?.user?.fullName || apt.patient?.user?.username || 'Unknown',
+          time: formatTime(apt.appointmentTime),
+          type: apt.reason || 'Consultation',
+          status: apt.status,
+        }));
+
+      setUpcomingAppointments(upcomingToday);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setStats({
+        todayAppointments: 0,
+        totalPatients: 0,
+        pendingConsultations: 0,
+        completedToday: 0,
+      });
+      setUpcomingAppointments([]);
       setLoading(false);
     }
   };
@@ -67,11 +87,16 @@ const DoctorDashboard = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading dashboard..." />;
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading dashboard..." />
+      </DashboardLayout>
+    );
   }
 
   return (
-    <div className="doctor-dashboard">
+    <DashboardLayout>
+      <div className="doctor-dashboard">
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-content">
@@ -190,6 +215,7 @@ const DoctorDashboard = () => {
         </div>
       </section>
     </div>
+    </DashboardLayout>
   );
 };
 

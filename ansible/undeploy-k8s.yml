@@ -1,0 +1,110 @@
+---
+- name: Undeploy Hospital Management System from Kubernetes
+  hosts: local
+  gather_facts: yes
+  vars_files:
+    - group_vars/all.yml
+  
+  tasks:
+    - name: Delete Frontend Deployment
+      kubernetes.core.k8s:
+        state: absent
+        api_version: apps/v1
+        kind: Deployment
+        name: frontend
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Delete Backend Deployment
+      kubernetes.core.k8s:
+        state: absent
+        api_version: apps/v1
+        kind: Deployment
+        name: backend
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Delete MySQL Deployment
+      kubernetes.core.k8s:
+        state: absent
+        api_version: apps/v1
+        kind: Deployment
+        name: mysql
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Delete Services
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: Service
+        name: "{{ item }}"
+        namespace: "{{ k8s_namespace }}"
+      loop:
+        - frontend-service
+        - backend-service
+        - mysql-service
+      ignore_errors: yes
+
+    - name: Delete Ingress
+      kubernetes.core.k8s:
+        state: absent
+        api_version: networking.k8s.io/v1
+        kind: Ingress
+        name: hospital-ingress
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Delete HPA
+      kubernetes.core.k8s:
+        state: absent
+        api_version: autoscaling/v2
+        kind: HorizontalPodAutoscaler
+        name: "{{ item }}"
+        namespace: "{{ k8s_namespace }}"
+      loop:
+        - backend-hpa
+        - frontend-hpa
+      ignore_errors: yes
+
+    - name: Delete PVC
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: PersistentVolumeClaim
+        name: mysql-pvc
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Delete ConfigMaps
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: ConfigMap
+        name: "{{ item }}"
+        namespace: "{{ k8s_namespace }}"
+      loop:
+        - mysql-config
+        - backend-config
+        - frontend-config
+      ignore_errors: yes
+
+    - name: Delete Secrets
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: Secret
+        name: "{{ item }}"
+        namespace: "{{ k8s_namespace }}"
+      loop:
+        - mysql-secret
+        - backend-secret
+      ignore_errors: yes
+
+    - name: Delete Namespace (optional - commented out for safety)
+      kubernetes.core.k8s:
+        state: absent
+        api_version: v1
+        kind: Namespace
+        name: "{{ k8s_namespace }}"
+      when: false  # Set to true if you want to delete the namespace

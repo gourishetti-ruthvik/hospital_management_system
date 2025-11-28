@@ -1,0 +1,36 @@
+---
+- name: Complete CI/CD Pipeline - Build, Push, and Deploy
+  hosts: local
+  gather_facts: yes
+  vars_files:
+    - group_vars/all.yml
+  
+  tasks:
+    - name: Display pipeline start message
+      debug:
+        msg: "Starting complete CI/CD pipeline for Hospital Management System"
+
+    - name: Build and Push Docker Images
+      include_tasks: build-push-images.yml
+
+    - name: Deploy to Kubernetes
+      include_tasks: deploy-k8s.yml
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ===================================================
+          Deployment Complete!
+          ===================================================
+          Access your application:
+          - Run: kubectl get services -n {{ k8s_namespace }}
+          - Frontend: Use the external IP or NodePort
+          - Backend API: http://backend-service:{{ backend_port }}
+          
+          Monitor pods:
+          - kubectl get pods -n {{ k8s_namespace }}
+          
+          View logs:
+          - kubectl logs -f deployment/frontend -n {{ k8s_namespace }}
+          - kubectl logs -f deployment/backend -n {{ k8s_namespace }}
+          ===================================================

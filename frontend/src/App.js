@@ -7,8 +7,17 @@ import LandingPage from './components/common/LandingPage';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import AdminDashboard from './modules/admin/AdminDashboard';
+import ManageDoctors from './modules/admin/ManageDoctors';
+import ManagePatients from './modules/admin/ManagePatients';
 import DoctorDashboard from './modules/doctor/DoctorDashboard';
+import DoctorAppointments from './modules/doctor/DoctorAppointments';
+import DoctorPatients from './modules/doctor/DoctorPatients';
+import DoctorPrescriptions from './modules/doctor/DoctorPrescriptions';
 import PatientDashboard from './modules/patient/PatientDashboard';
+import PatientPrescriptions from './modules/patient/PatientPrescriptions';
+import PatientRecords from './modules/patient/PatientRecords';
+import BookAppointment from './modules/patient/BookAppointment';
+import FindDoctors from './modules/patient/FindDoctors';
 import About from './components/common/About';
 import Contact from './components/common/Contact';
 import HelpCenter from './components/common/HelpCenter';
@@ -64,6 +73,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/doctors"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.ADMIN]}>
+                    <ManageDoctors />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/patients"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.ADMIN]}>
+                    <ManagePatients />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Protected Doctor Routes */}
               <Route
@@ -74,6 +99,30 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/doctor/appointments"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.DOCTOR]}>
+                    <DoctorAppointments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctor/patients"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.DOCTOR]}>
+                    <DoctorPatients />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctor/prescriptions"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.DOCTOR]}>
+                    <DoctorPrescriptions />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Protected Patient Routes */}
               <Route
@@ -81,6 +130,38 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.PATIENT]}>
                     <PatientDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/prescriptions"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.PATIENT]}>
+                    <PatientPrescriptions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/medical-records"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.PATIENT]}>
+                    <PatientRecords />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/book-appointment"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.PATIENT]}>
+                    <BookAppointment />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/find-doctors"
+                element={
+                  <ProtectedRoute allowedRoles={[APP_CONFIG.ROLES.PATIENT]}>
+                    <FindDoctors />
                   </ProtectedRoute>
                 }
               />

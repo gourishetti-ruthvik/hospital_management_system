@@ -16,9 +16,10 @@ const doctorService = {
   // Appointment Management
   getMyAppointments: async (filters) => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.DOCTOR.APPOINTMENTS, { params: filters });
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR, { params: filters });
       return response.data;
     } catch (error) {
+      console.error('Error fetching doctor appointments:', error);
       throw error.response?.data || { message: 'Failed to fetch appointments' };
     }
   },
@@ -34,12 +35,12 @@ const doctorService = {
 
   updateAppointmentStatus: async (id, status, notes) => {
     try {
-      const response = await apiClient.patch(`${API_ENDPOINTS.DOCTOR.APPOINTMENTS}/${id}/status`, {
-        status,
-        notes,
+      const response = await apiClient.put(API_ENDPOINTS.APPOINTMENTS.UPDATE_STATUS(id), null, {
+        params: { status }
       });
       return response.data;
     } catch (error) {
+      console.error('Error updating appointment status:', error);
       throw error.response?.data || { message: 'Failed to update appointment' };
     }
   },

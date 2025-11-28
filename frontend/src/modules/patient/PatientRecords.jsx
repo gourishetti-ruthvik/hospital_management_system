@@ -1,189 +1,177 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '../../services/apiClient';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './PatientRecords.css';
 
 const PatientRecords = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('prescriptions');
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     loadRecords();
   }, []);
 
-  const loadRecords = () => {
-    setLoading(true);
-    // Simulated data - will be replaced with API call in Phase 3
-    setTimeout(() => {
-      setRecords({
-        prescriptions: [
-          {
-            id: 1,
-            doctorName: 'Dr. Sarah Johnson',
-            date: '2024-01-10',
-            diagnosis: 'Viral Fever',
-            medications: 'Paracetamol 500mg - 1 tablet twice daily, Rest',
-          },
-          {
-            id: 2,
-            doctorName: 'Dr. Michael Brown',
-            date: '2024-01-05',
-            diagnosis: 'Skin Allergy',
-            medications: 'Cetirizine 10mg - Once daily, Topical cream',
-          },
-        ],
-        appointments: [
-          {
-            id: 1,
-            doctorName: 'Dr. James Wilson',
-            date: '2024-01-25',
-            time: '11:00 AM',
-            status: 'Scheduled',
-          },
-          {
-            id: 2,
-            doctorName: 'Dr. Sarah Johnson',
-            date: '2024-01-20',
-            time: '10:00 AM',
-            status: 'Scheduled',
-          },
-        ],
-        labReports: [
-          {
-            id: 1,
-            testName: 'Complete Blood Count',
-            date: '2024-01-08',
-            status: 'Completed',
-            result: 'Normal',
-          },
-          {
-            id: 2,
-            testName: 'Lipid Profile',
-            date: '2024-01-03',
-            status: 'Completed',
-            result: 'Borderline High Cholesterol',
-          },
-        ],
-      });
+  const loadRecords = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(API_ENDPOINTS.PATIENT.MEDICAL_RECORDS);
+      setRecords(response.data);
+    } catch (error) {
+      console.error('Error loading medical records:', error);
+      setRecords([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
+  const filteredRecords = filter === 'all' 
+    ? records 
+    : records.filter(r => r.recordType === filter);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const getRecordTypeIcon = (type) => {
+    switch(type?.toUpperCase()) {
+      case 'CHECKUP': return '🩺';
+      case 'LAB_RESULT': return '🔬';
+      case 'RADIOLOGY': return '📷';
+      case 'SURGERY': return '🏥';
+      case 'VACCINATION': return '💉';
+      default: return '📋';
+    }
+  };
+
+  const getRecordTypeColor = (type) => {
+    switch(type?.toUpperCase()) {
+      case 'CHECKUP': return '#28a745';
+      case 'LAB_RESULT': return '#17a2b8';
+      case 'RADIOLOGY': return '#6f42c1';
+      case 'SURGERY': return '#dc3545';
+      case 'VACCINATION': return '#ffc107';
+      default: return '#6c757d';
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading medical records..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <div className="patient-records">
-      <div className="page-header">
+    <DashboardLayout>
+      <div className="medical-records-container">
+      <div className="records-header">
         <h1>📋 Medical Records</h1>
-        <p>View your complete medical history</p>
-      </div>
-
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'prescriptions' ? 'active' : ''}`}
-          onClick={() => setActiveTab('prescriptions')}
-        >
-          📝 Prescriptions
-        </button>
-        <button
-          className={`tab ${activeTab === 'appointments' ? 'active' : ''}`}
-          onClick={() => setActiveTab('appointments')}
-        >
-          📅 Appointments
-        </button>
-        <button
-          className={`tab ${activeTab === 'labReports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('labReports')}
-        >
-          🔬 Lab Reports
+        <button className="back-btn" onClick={() => navigate('/patient/dashboard')}>
+          ← Back to Dashboard
         </button>
       </div>
 
-      <div className="tab-content">
-        {activeTab === 'prescriptions' && (
-          <div className="records-grid">
-            {records.prescriptions?.map(prescription => (
-              <div key={prescription.id} className="record-card">
-                <div className="record-header">
-                  <h3>👨‍⚕️ {prescription.doctorName}</h3>
-                  <span className="date">📅 {prescription.date}</span>
+      <div className="filter-section">
+        <div className="filter-buttons">
+          <button 
+            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            All Records
+          </button>
+          <button 
+            className={`filter-btn ${filter === 'CHECKUP' ? 'active' : ''}`}
+            onClick={() => setFilter('CHECKUP')}
+          >
+            Checkups
+          </button>
+          <button 
+            className={`filter-btn ${filter === 'LAB_RESULT' ? 'active' : ''}`}
+            onClick={() => setFilter('LAB_RESULT')}
+          >
+            Lab Results
+          </button>
+          <button 
+            className={`filter-btn ${filter === 'RADIOLOGY' ? 'active' : ''}`}
+            onClick={() => setFilter('RADIOLOGY')}
+          >
+            Radiology
+          </button>
+        </div>
+      </div>
+
+      <div className="records-grid">
+        {filteredRecords.length === 0 ? (
+          <div className="empty-state">
+            <p>📋 No medical records found</p>
+            <p className="empty-subtitle">Your medical records will appear here after your appointments</p>
+          </div>
+        ) : (
+          filteredRecords.map((record) => (
+            <div key={record.id} className="record-card">
+              <div className="record-header">
+                <div className="record-type" style={{ backgroundColor: getRecordTypeColor(record.recordType) }}>
+                  <span className="type-icon">{getRecordTypeIcon(record.recordType)}</span>
+                  <span className="type-name">{record.recordType?.replace('_', ' ')}</span>
                 </div>
-                <div className="record-body">
-                  <div className="info-item">
+                <span className="record-date">{formatDate(record.recordDate)}</span>
+              </div>
+
+              <div className="record-content">
+                <h3>{record.title}</h3>
+                <p className="description">{record.description}</p>
+
+                {record.diagnosis && (
+                  <div className="record-section">
                     <strong>Diagnosis:</strong>
-                    <span>{prescription.diagnosis}</span>
+                    <p>{record.diagnosis}</p>
                   </div>
-                  <div className="info-item">
-                    <strong>Medications:</strong>
-                    <span>{prescription.medications}</span>
-                  </div>
-                </div>
-                <div className="record-footer">
-                  <button className="btn-download">📥 Download</button>
-                  <button className="btn-view">👁️ View Details</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                )}
 
-        {activeTab === 'appointments' && (
-          <div className="records-grid">
-            {records.appointments?.map(appointment => (
-              <div key={appointment.id} className="record-card">
-                <div className="record-header">
-                  <h3>👨‍⚕️ {appointment.doctorName}</h3>
-                  <span className={`status-badge ${appointment.status === 'Scheduled' ? 'blue' : 'green'}`}>
-                    {appointment.status}
-                  </span>
-                </div>
-                <div className="record-body">
-                  <div className="info-item">
-                    <strong>Date:</strong>
-                    <span>{appointment.date}</span>
+                {record.treatment && (
+                  <div className="record-section">
+                    <strong>Treatment:</strong>
+                    <p>{record.treatment}</p>
                   </div>
-                  <div className="info-item">
-                    <strong>Time:</strong>
-                    <span>{appointment.time}</span>
-                  </div>
-                </div>
-                <div className="record-footer">
-                  <button className="btn-view">👁️ View Details</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                )}
 
-        {activeTab === 'labReports' && (
-          <div className="records-grid">
-            {records.labReports?.map(report => (
-              <div key={report.id} className="record-card">
-                <div className="record-header">
-                  <h3>🔬 {report.testName}</h3>
-                  <span className={`status-badge ${report.status === 'Completed' ? 'green' : 'orange'}`}>
-                    {report.status}
-                  </span>
-                </div>
-                <div className="record-body">
-                  <div className="info-item">
-                    <strong>Date:</strong>
-                    <span>{report.date}</span>
+                {record.labResults && (
+                  <div className="record-section lab-results">
+                    <strong>Lab Results:</strong>
+                    <p>{record.labResults}</p>
                   </div>
-                  <div className="info-item">
-                    <strong>Result:</strong>
-                    <span>{report.result}</span>
-                  </div>
-                </div>
+                )}
+
                 <div className="record-footer">
-                  <button className="btn-download">📥 Download Report</button>
-                  <button className="btn-view">👁️ View Details</button>
+                  <div className="doctor-info">
+                    <span>👨‍⚕️ Dr. {record.doctor?.user?.fullName || record.doctor?.user?.username || 'Unknown'}</span>
+                  </div>
+                  {record.confidential && (
+                    <span className="confidential-badge">🔒 Confidential</span>
+                  )}
                 </div>
+
+                {record.notes && (
+                  <div className="record-notes">
+                    <strong>Notes:</strong>
+                    <p>{record.notes}</p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

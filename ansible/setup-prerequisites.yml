@@ -1,0 +1,91 @@
+---
+- name: Setup Prerequisites for Deployment
+  hosts: local
+  gather_facts: yes
+  become: no
+  
+  tasks:
+    - name: Check OS type
+      debug:
+        msg: "Running on {{ ansible_os_family }}"
+
+    - name: Install kubectl (Debian/Ubuntu)
+      block:
+        - name: Download kubectl
+          get_url:
+            url: "https://dl.k8s.io/release/{{ kubectl_version | default('v1.28.0') }}/bin/linux/amd64/kubectl"
+            dest: /tmp/kubectl
+            mode: '0755'
+        
+        - name: Install kubectl
+          copy:
+            src: /tmp/kubectl
+            dest: /usr/local/bin/kubectl
+            mode: '0755'
+          become: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker (Debian/Ubuntu)
+      block:
+        - name: Install required packages
+          apt:
+            name:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - gnupg
+              - lsb-release
+            state: present
+            update_cache: yes
+          become: yes
+        
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+          become: yes
+        
+        - name: Add Docker repository
+          apt_repository:
+            repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+            state: present
+          become: yes
+        
+        - name: Install Docker
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+            state: present
+            update_cache: yes
+          become: yes
+        
+        - name: Start Docker service
+          systemd:
+            name: docker
+            state: started
+            enabled: yes
+          become: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Python dependencies
+      pip:
+        name:
+          - kubernetes
+          - docker
+          - openshift
+        state: present
+      become: yes
+
+    - name: Verify installations
+      command: "{{ item }}"
+      loop:
+        - kubectl version --client
+        - docker --version
+      register: verify_results
+      changed_when: false
+
+    - name: Display verification results
+      debug:
+        var: verify_results

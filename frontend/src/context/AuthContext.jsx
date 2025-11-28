@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import authService from '../services/authService';
-import { APP_CONFIG } from '../config/appConfig';
 
 // Create Authentication Context
 const AuthContext = createContext(null);
@@ -25,17 +24,30 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = () => {
       try {
+        const token = authService.isAuthenticated();
         const currentUser = authService.getCurrentUser();
         const currentRole = authService.getCurrentRole();
-        const authenticated = authService.isAuthenticated();
 
-        if (authenticated && currentUser && currentRole) {
+        // Only set authenticated if we have all required data
+        if (token && currentUser && currentRole) {
           setUser(currentUser);
           setRole(currentRole);
           setIsAuthenticated(true);
+          console.log('Auth initialized successfully:', { username: currentUser.username, role: currentRole });
+        } else {
+          // Clear any partial auth data
+          if (!token || !currentUser || !currentRole) {
+            localStorage.removeItem('hms_token');
+            localStorage.removeItem('hms_user');
+            localStorage.removeItem('hms_role');
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        // Clear auth data on error
+        localStorage.removeItem('hms_token');
+        localStorage.removeItem('hms_user');
+        localStorage.removeItem('hms_role');
       } finally {
         setLoading(false);
       }
@@ -47,12 +59,31 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
+      console.log('AuthContext: Starting login...');
       const response = await authService.login(credentials);
+      
+      console.log('AuthContext: Login response received:', response);
+      
+      // Verify we have all required data
+      if (!response.token || !response.user || !response.role) {
+        console.error('AuthContext: Invalid response data', response);
+        throw new Error('Invalid login response: missing required data');
+      }
+      
+      // Set state
       setUser(response.user);
       setRole(response.role);
       setIsAuthenticated(true);
+      
+      console.log('AuthContext: State updated - authenticated as', response.role);
+      
       return response;
     } catch (error) {
+      console.error('AuthContext: Login failed', error);
+      // Make sure we're not authenticated on error
+      setUser(null);
+      setRole(null);
+      setIsAuthenticated(false);
       throw error;
     }
   };

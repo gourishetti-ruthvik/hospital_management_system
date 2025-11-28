@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import { API_ENDPOINTS } from '../config/apiConfig';
+import API_BASE_URL from '../config/apiConfig';
 
 // Patient Service
 const patientService = {
@@ -19,24 +20,29 @@ const patientService = {
       const response = await apiClient.get(API_ENDPOINTS.PATIENT.APPOINTMENTS);
       return response.data;
     } catch (error) {
+      console.error('Error fetching appointments:', error);
       throw error.response?.data || { message: 'Failed to fetch appointments' };
     }
   },
 
   bookAppointment: async (appointmentData) => {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.PATIENT.APPOINTMENTS, appointmentData);
+      // POST to /api/appointments (not /patient)
+      const response = await apiClient.post(`${API_BASE_URL}/api/appointments`, appointmentData);
       return response.data;
     } catch (error) {
+      console.error('Error booking appointment:', error);
       throw error.response?.data || { message: 'Failed to book appointment' };
     }
   },
 
   cancelAppointment: async (id) => {
     try {
-      const response = await apiClient.delete(`${API_ENDPOINTS.PATIENT.APPOINTMENTS}/${id}`);
+      // DELETE to /api/appointments/:id
+      const response = await apiClient.delete(`${API_BASE_URL}/api/appointments/${id}`);
       return response.data;
     } catch (error) {
+      console.error('Error cancelling appointment:', error);
       throw error.response?.data || { message: 'Failed to cancel appointment' };
     }
   },

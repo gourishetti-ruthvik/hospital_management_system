@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { APP_CONFIG } from '../../config/appConfig';
+import Navigation from '../common/Navigation';
 import './Auth.css';
 
 const Login = () => {
@@ -61,43 +62,64 @@ const Login = () => {
     setLoading(true);
 
     try {
-      console.log('Sending login data:', formData);
+      console.log('=== Login Process Started ===');
+      console.log('Form data:', { username: formData.username });
       
       // Use AuthContext login method
       const response = await login(formData);
       
-      console.log('Login response:', response);
+      console.log('Login successful, response:', response);
+      
+      if (!response || !response.role) {
+        throw new Error('Invalid response from server - missing role information');
+      }
       
       const { role } = response;
+      console.log('User role:', role);
 
       // Redirect based on role
-      if (role === APP_CONFIG.ROLES.ADMIN) {
-        navigate(APP_CONFIG.ROUTES.ADMIN_DASHBOARD);
-      } else if (role === APP_CONFIG.ROLES.DOCTOR) {
-        navigate(APP_CONFIG.ROUTES.DOCTOR_DASHBOARD);
-      } else if (role === APP_CONFIG.ROLES.PATIENT) {
-        navigate(APP_CONFIG.ROUTES.PATIENT_DASHBOARD);
+      if (role === APP_CONFIG.ROLES.ADMIN || role === 'ADMIN') {
+        console.log('Navigating to admin dashboard');
+        navigate(APP_CONFIG.ROUTES.ADMIN_DASHBOARD, { replace: true });
+      } else if (role === APP_CONFIG.ROLES.DOCTOR || role === 'DOCTOR') {
+        console.log('Navigating to doctor dashboard');
+        navigate(APP_CONFIG.ROUTES.DOCTOR_DASHBOARD, { replace: true });
+      } else if (role === APP_CONFIG.ROLES.PATIENT || role === 'PATIENT') {
+        console.log('Navigating to patient dashboard');
+        navigate(APP_CONFIG.ROUTES.PATIENT_DASHBOARD, { replace: true });
       } else {
-        navigate('/');
+        console.log('Unknown role, navigating to home');
+        navigate('/', { replace: true });
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('=== Login Failed ===');
+      console.error('Error object:', error);
       
       // Handle different error scenarios
-      const errorMessage = error.message || 'Login failed. Please check your credentials.';
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.error) {
+        errorMessage = error.error;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       setApiError(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h2>🏥 Hospital Management System</h2>
-          <p>Sign in to your account</p>
-        </div>
+    <>
+      <Navigation />
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h2>🏥 Hospital Management System</h2>
+            <p>Sign in to your account</p>
+          </div>
 
         {apiError && (
           <div className="alert alert-danger" role="alert">
@@ -144,6 +166,7 @@ const Login = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

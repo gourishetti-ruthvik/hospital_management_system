@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import apiClient from '../../services/apiClient';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import DataTable from '../../components/common/DataTable';
 import './DoctorAppointments.css';
 
@@ -13,51 +17,37 @@ const DoctorAppointments = () => {
     loadAppointments();
   }, []);
 
-  const loadAppointments = () => {
+  const loadAppointments = async () => {
     setLoading(true);
-    // Simulated data - will be replaced with API call in Phase 3
-    setTimeout(() => {
-      setAppointments([
-        {
-          id: 1,
-          patientName: 'John Doe',
-          patientEmail: 'john@example.com',
-          date: '2024-01-15',
-          time: '10:00 AM',
-          status: 'Scheduled',
-          reason: 'Regular checkup',
-        },
-        {
-          id: 2,
-          patientName: 'Jane Smith',
-          patientEmail: 'jane@example.com',
-          date: '2024-01-15',
-          time: '11:30 AM',
-          status: 'Completed',
-          reason: 'Follow-up consultation',
-        },
-        {
-          id: 3,
-          patientName: 'Robert Johnson',
-          patientEmail: 'robert@example.com',
-          date: '2024-01-16',
-          time: '02:00 PM',
-          status: 'Pending',
-          reason: 'Lab results review',
-        },
-      ]);
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.APPOINTMENTS.DOCTOR);
+      console.log('Doctor appointments loaded:', response.data);
+      setAppointments(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      setAppointments([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
-  const handleStatusChange = (appointmentId, newStatus) => {
-    setAppointments(prev =>
-      prev.map(apt =>
-        apt.id === appointmentId ? { ...apt, status: newStatus } : apt
-      )
-    );
-    console.log(`Appointment ${appointmentId} status changed to ${newStatus}`);
-    // API call will be added in Phase 3
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await apiClient.put(API_ENDPOINTS.APPOINTMENTS.UPDATE_STATUS(appointmentId), null, {
+        params: { status: newStatus }
+      });
+      
+      // Update local state
+      setAppointments(prev =>
+        prev.map(apt =>
+          apt.id === appointmentId ? { ...apt, status: newStatus } : apt
+        )
+      );
+      console.log(`Appointment ${appointmentId} status changed to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert('Failed to update appointment status');
+    }
   };
 
   const getStatusClass = (status) => {
@@ -70,25 +60,47 @@ const DoctorAppointments = () => {
     return statusMap[status] || 'gray';
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
+    const time = new Date(`2000-01-01T${timeString}`);
+    return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const filteredAppointments = filter === 'all'
     ? appointments
     : appointments.filter(apt => apt.status === filter);
 
-  const todayAppointments = appointments.filter(apt => apt.date === '2024-01-15').length;
-  const pendingAppointments = appointments.filter(apt => apt.status === 'Pending').length;
+  const todayAppointments = appointments.filter(apt => 
+    apt.appointmentDate?.split('T')[0] === getTodayDate()
+  ).length;
+  const pendingAppointments = appointments.filter(apt => apt.status === 'PENDING' || apt.status === 'SCHEDULED').length;
 
   const columns = [
     {
       header: 'Patient Name',
-      accessor: 'patientName',
+      accessor: 'patient',
+      render: (patient) => patient?.user?.fullName || patient?.user?.username || 'Unknown'
     },
     {
       header: 'Date',
-      accessor: 'date',
+      accessor: 'appointmentDate',
+      render: (date) => formatDate(date)
     },
     {
       header: 'Time',
-      accessor: 'time',
+      accessor: 'appointmentTime',
+      render: (time) => formatTime(time)
     },
     {
       header: 'Reason',
@@ -126,8 +138,17 @@ const DoctorAppointments = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading appointments..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <div className="doctor-appointments">
+    <DashboardLayout>
+      <div className="doctor-appointments">
       <div className="page-header">
         <h1>📅 My Appointments</h1>
       </div>
@@ -182,6 +203,7 @@ const DoctorAppointments = () => {
         />
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

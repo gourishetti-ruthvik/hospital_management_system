@@ -1,0 +1,14 @@
+target/
+!target/*.jar
+.mvn
+mvnw
+mvnw.cmd
+*.log
+.git
+.gitignore
+README.md
+.vscode
+.idea
+*.iml
+.DS_Store
+src/test/

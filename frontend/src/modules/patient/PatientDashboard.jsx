@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import './PatientDashboard.css';
 
 const PatientDashboard = () => {
@@ -22,36 +23,54 @@ const PatientDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Simulated data - will be replaced with API calls in Phase 3
-      setTimeout(() => {
-        setStats({
-          upcomingAppointments: 2,
-          completedAppointments: 5,
-          activePrescriptions: 3,
-          pendingBills: 1,
-        });
-        setAppointments([
-          {
-            id: 1,
-            doctorName: 'Dr. Sarah Williams',
-            specialty: 'Cardiologist',
-            date: '2025-10-30',
-            time: '10:00 AM',
-            status: 'Scheduled',
-          },
-          {
-            id: 2,
-            doctorName: 'Dr. Michael Brown',
-            specialty: 'General Physician',
-            date: '2025-11-02',
-            time: '02:30 PM',
-            status: 'Scheduled',
-          },
-        ]);
-        setLoading(false);
-      }, 1000);
+      console.log('Fetching dashboard data...');
+      const patientService = (await import('../../services/patientService')).default;
+      const appointmentsData = await patientService.getMyAppointments();
+      
+      console.log('Appointments data received:', appointmentsData);
+      
+      // Ensure appointmentsData is an array
+      const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
+      
+      // Calculate stats from appointments
+      const upcoming = appointments.filter(apt => 
+        apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED'
+      ).length;
+      const completed = appointments.filter(apt => apt.status === 'COMPLETED').length;
+      
+      setStats({
+        upcomingAppointments: upcoming,
+        completedAppointments: completed,
+        activePrescriptions: 0, // Will be implemented with prescription API
+        pendingBills: 0, // Will be implemented with billing API
+      });
+      
+      // Format appointments for display
+      const formattedAppointments = appointments
+        .filter(apt => apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED')
+        .slice(0, 5)
+        .map(apt => ({
+          id: apt.id,
+          doctorName: apt.doctor?.user?.fullName || 'Dr. ' + apt.doctor?.user?.username || 'Unknown Doctor',
+          specialty: apt.doctor?.specialization || 'General',
+          date: new Date(apt.appointmentDate).toISOString().split('T')[0],
+          time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          status: apt.status,
+        }));
+      
+      setAppointments(formattedAppointments);
+      console.log('Dashboard data loaded successfully');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Don't throw error, just set empty data
+      setStats({
+        upcomingAppointments: 0,
+        completedAppointments: 0,
+        activePrescriptions: 0,
+        pendingBills: 0,
+      });
+      setAppointments([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -62,11 +81,16 @@ const PatientDashboard = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading dashboard..." />;
+    return (
+      <DashboardLayout>
+        <LoadingSpinner message="Loading dashboard..." />
+      </DashboardLayout>
+    );
   }
 
   return (
-    <div className="patient-dashboard">
+    <DashboardLayout>
+      <div className="patient-dashboard">
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-content">
@@ -131,7 +155,7 @@ const PatientDashboard = () => {
             <span className="action-text">Book Appointment</span>
           </button>
 
-          <button className="action-card" onClick={() => navigate('/patient/doctors')}>
+          <button className="action-card" onClick={() => navigate('/patient/find-doctors')}>
             <span className="action-icon">👨‍⚕️</span>
             <span className="action-text">Find Doctors</span>
           </button>
@@ -203,6 +227,7 @@ const PatientDashboard = () => {
         </div>
       </section>
     </div>
+    </DashboardLayout>
   );
 };
 

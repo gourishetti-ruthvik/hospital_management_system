@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import patientService from '../../services/patientService';
 import DataTable from '../../components/common/DataTable';
 import './PatientAppointments.css';
 
@@ -8,66 +9,60 @@ const PatientAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAppointments();
   }, []);
 
-  const loadAppointments = () => {
+  const loadAppointments = async () => {
     setLoading(true);
-    // Simulated data - will be replaced with API call in Phase 3
-    setTimeout(() => {
-      setAppointments([
-        {
-          id: 1,
-          doctorName: 'Dr. Sarah Johnson',
-          specialization: 'Cardiologist',
-          date: '2024-01-20',
-          time: '10:00 AM',
-          status: 'Scheduled',
-          reason: 'Regular checkup',
-        },
-        {
-          id: 2,
-          doctorName: 'Dr. Michael Brown',
-          specialization: 'Dermatologist',
-          date: '2024-01-18',
-          time: '02:30 PM',
-          status: 'Completed',
-          reason: 'Skin consultation',
-        },
-        {
-          id: 3,
-          doctorName: 'Dr. James Wilson',
-          specialization: 'Orthopedic',
-          date: '2024-01-25',
-          time: '11:00 AM',
-          status: 'Pending',
-          reason: 'Joint pain assessment',
-        },
-      ]);
+    setError('');
+    try {
+      const data = await patientService.getMyAppointments();
+      // Transform API data to match component format
+      const formattedAppointments = data.map(apt => ({
+        id: apt.id,
+        doctorName: apt.doctor?.user?.fullName || 'Dr. ' + apt.doctor?.user?.username,
+        specialization: apt.doctor?.specialization || 'General',
+        date: new Date(apt.appointmentDate).toISOString().split('T')[0],
+        time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        status: apt.status,
+        reason: apt.reasonForVisit,
+      }));
+      setAppointments(formattedAppointments);
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      setError('Failed to load appointments. Please try again.');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
-  const handleCancelAppointment = (appointmentId) => {
+  const handleCancelAppointment = async (appointmentId) => {
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      setAppointments(prev =>
-        prev.map(apt =>
-          apt.id === appointmentId ? { ...apt, status: 'Cancelled' } : apt
-        )
-      );
-      console.log(`Appointment ${appointmentId} cancelled`);
-      // API call will be added in Phase 3
+      try {
+        await patientService.cancelAppointment(appointmentId);
+        setAppointments(prev =>
+          prev.map(apt =>
+            apt.id === appointmentId ? { ...apt, status: 'CANCELLED' } : apt
+          )
+        );
+        alert('Appointment cancelled successfully!');
+      } catch (error) {
+        console.error('Error cancelling appointment:', error);
+        alert('Failed to cancel appointment. Please try again.');
+      }
     }
   };
 
   const getStatusClass = (status) => {
     const statusMap = {
-      Scheduled: 'blue',
-      Pending: 'orange',
-      Completed: 'green',
-      Cancelled: 'red',
+      SCHEDULED: 'blue',
+      CONFIRMED: 'blue',
+      PENDING: 'orange',
+      COMPLETED: 'green',
+      CANCELLED: 'red',
     };
     return statusMap[status] || 'gray';
   };
@@ -77,10 +72,10 @@ const PatientAppointments = () => {
     : appointments.filter(apt => apt.status === filter);
 
   const upcomingCount = appointments.filter(apt => 
-    apt.status === 'Scheduled' || apt.status === 'Pending'
+    apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED' || apt.status === 'PENDING'
   ).length;
   
-  const completedCount = appointments.filter(apt => apt.status === 'Completed').length;
+  const completedCount = appointments.filter(apt => apt.status === 'COMPLETED').length;
 
   const columns = [
     {
@@ -119,7 +114,7 @@ const PatientAppointments = () => {
       accessor: 'id',
       render: (id, row) => (
         <div className="action-buttons">
-          {(row.status === 'Scheduled' || row.status === 'Pending') && (
+          {(row.status === 'SCHEDULED' || row.status === 'CONFIRMED' || row.status === 'PENDING') && (
             <button
               className="btn-cancel"
               onClick={() => handleCancelAppointment(id)}

@@ -1,0 +1,52 @@
+---
+# Docker Hub Configuration
+dockerhub_username: "YOUR_DOCKERHUB_USERNAME"
+dockerhub_password: "YOUR_DOCKERHUB_PASSWORD"
+
+# Docker Images
+frontend_image: "{{ dockerhub_username }}/hospital-frontend"
+backend_image: "{{ dockerhub_username }}/hospital-backend"
+image_tag: "latest"
+
+# Kubernetes Configuration
+k8s_namespace: "hospital-system"
+k8s_manifests_dir: "../k8s"
+
+# MySQL Configuration
+mysql_root_password: "root123"
+mysql_database: "hospital_db"
+mysql_user: "hospital_user"
+mysql_password: "hospital_pass"
+
+# Application Configuration
+backend_replicas: 2
+frontend_replicas: 2
+backend_port: 8080
+frontend_port: 80
+
+# JWT Configuration
+jwt_secret: "your-super-secret-jwt-key-change-this-in-production-minimum-256-bits"
+jwt_expiration: 86400000
+
+# CORS Configuration
+cors_allowed_origins: "http://localhost:3000,http://localhost"
+
+# Resource Limits
+backend_memory_request: "512Mi"
+backend_memory_limit: "1Gi"
+backend_cpu_request: "250m"
+backend_cpu_limit: "500m"
+
+frontend_memory_request: "128Mi"
+frontend_memory_limit: "256Mi"
+frontend_cpu_request: "100m"
+frontend_cpu_limit: "200m"
+
+mysql_memory_request: "512Mi"
+mysql_memory_limit: "1Gi"
+mysql_cpu_request: "250m"
+mysql_cpu_limit: "500m"
+
+# Storage
+mysql_storage_size: "10Gi"
+storage_class: "standard"

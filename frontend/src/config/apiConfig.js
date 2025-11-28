@@ -1,5 +1,6 @@
 // API Configuration for Hospital Management System
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+// Use relative path to leverage nginx proxy in Kubernetes deployment
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
 export const API_ENDPOINTS = {
   // Authentication endpoints
@@ -12,9 +13,9 @@ export const API_ENDPOINTS = {
   
   // Admin endpoints
   ADMIN: {
-    DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
-    DOCTORS: `${API_BASE_URL}/admin/doctors`,
-    PATIENTS: `${API_BASE_URL}/admin/patients`,
+    DASHBOARD: `${API_BASE_URL}/api/admin/dashboard`,
+    DOCTORS: `${API_BASE_URL}/api/admin`,
+    PATIENTS: `${API_BASE_URL}/api/admin`,
     APPOINTMENTS: `${API_BASE_URL}/admin/appointments`,
     REPORTS: `${API_BASE_URL}/admin/reports`,
     BILLING: `${API_BASE_URL}/admin/billing`,
@@ -22,21 +23,38 @@ export const API_ENDPOINTS = {
   
   // Doctor endpoints
   DOCTOR: {
-    DASHBOARD: `${API_BASE_URL}/doctor/dashboard`,
-    APPOINTMENTS: `${API_BASE_URL}/doctor/appointments`,
-    PATIENTS: `${API_BASE_URL}/doctor/patients`,
-    PRESCRIPTIONS: `${API_BASE_URL}/doctor/prescriptions`,
-    SCHEDULE: `${API_BASE_URL}/doctor/schedule`,
+    DASHBOARD: `${API_BASE_URL}/api/doctors/dashboard`,
+    APPOINTMENTS: `${API_BASE_URL}/api/appointments/doctor`,
+    PATIENTS: `${API_BASE_URL}/api/doctors/patients`,
+    PRESCRIPTIONS: `${API_BASE_URL}/api/prescriptions/doctor`,
+    SCHEDULE: `${API_BASE_URL}/api/doctors/schedule`,
+  },
+
+  // Appointment endpoints
+  APPOINTMENTS: {
+    BASE: `${API_BASE_URL}/api/appointments`,
+    PATIENT: `${API_BASE_URL}/api/appointments/patient`,
+    DOCTOR: `${API_BASE_URL}/api/appointments/doctor`,
+    UPDATE_STATUS: (id) => `${API_BASE_URL}/api/appointments/${id}/status`,
+    CANCEL: (id) => `${API_BASE_URL}/api/appointments/${id}`,
   },
   
   // Patient endpoints
   PATIENT: {
     DASHBOARD: `${API_BASE_URL}/patient/dashboard`,
-    APPOINTMENTS: `${API_BASE_URL}/patient/appointments`,
-    DOCTORS: `${API_BASE_URL}/patient/doctors`,
-    PRESCRIPTIONS: `${API_BASE_URL}/patient/prescriptions`,
-    MEDICAL_RECORDS: `${API_BASE_URL}/patient/medical-records`,
+    APPOINTMENTS: `${API_BASE_URL}/api/appointments/patient`,
+    DOCTORS: `${API_BASE_URL}/api/doctors`,
+    PRESCRIPTIONS: `${API_BASE_URL}/api/prescriptions/patient`,
+    PRESCRIPTIONS_ACTIVE: `${API_BASE_URL}/api/prescriptions/patient/active`,
+    MEDICAL_RECORDS: `${API_BASE_URL}/api/medical-records/patient`,
     BILLING: `${API_BASE_URL}/patient/billing`,
+  },
+  
+  // Public Doctor endpoints
+  DOCTORS: {
+    LIST: `${API_BASE_URL}/api/doctors`,
+    AVAILABLE: `${API_BASE_URL}/api/doctors/available`,
+    SPECIALIZATIONS: `${API_BASE_URL}/api/doctors/specializations`,
   },
 };
 

@@ -1,0 +1,154 @@
+---
+- name: Deploy Hospital Management System to Kubernetes
+  hosts: local
+  gather_facts: yes
+  vars_files:
+    - group_vars/all.yml
+  
+  tasks:
+    - name: Check if kubectl is installed
+      command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if kubectl is not installed
+      fail:
+        msg: "kubectl is not installed. Please install kubectl first."
+      when: kubectl_check.rc != 0
+
+    - name: Check Kubernetes cluster connection
+      command: kubectl cluster-info
+      register: cluster_info
+      changed_when: false
+      failed_when: false
+
+    - name: Display cluster info
+      debug:
+        var: cluster_info.stdout_lines
+      when: cluster_info.rc == 0
+
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ k8s_namespace }}"
+            labels:
+              name: "{{ k8s_namespace }}"
+              environment: production
+
+    - name: Apply ConfigMaps
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/configmaps.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Apply Secrets
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/secrets.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Apply MySQL PVC
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/mysql-pvc.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Deploy MySQL
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/mysql-deployment.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Wait for MySQL to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ k8s_namespace }}"
+        label_selectors:
+          - app=mysql
+      register: mysql_pods
+      until: mysql_pods.resources[0].status.phase == "Running"
+      retries: 30
+      delay: 10
+
+    - name: Deploy Backend
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/backend-deployment.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Wait for Backend to be ready
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        name: backend
+        namespace: "{{ k8s_namespace }}"
+      register: backend_deployment
+      until: backend_deployment.resources[0].status.availableReplicas | default(0) >= 1
+      retries: 30
+      delay: 10
+
+    - name: Deploy Frontend
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/frontend-deployment.yaml"
+        namespace: "{{ k8s_namespace }}"
+
+    - name: Wait for Frontend to be ready
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        name: frontend
+        namespace: "{{ k8s_namespace }}"
+      register: frontend_deployment
+      until: frontend_deployment.resources[0].status.availableReplicas | default(0) >= 1
+      retries: 30
+      delay: 10
+
+    - name: Apply Ingress (optional)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/ingress.yaml"
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Apply HPA (optional)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ k8s_manifests_dir }}/hpa.yaml"
+        namespace: "{{ k8s_namespace }}"
+      ignore_errors: yes
+
+    - name: Get all pods in namespace
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ k8s_namespace }}"
+      register: all_pods
+
+    - name: Display pod status
+      debug:
+        msg: "Pod: {{ item.metadata.name }} - Status: {{ item.status.phase }}"
+      loop: "{{ all_pods.resources }}"
+
+    - name: Get frontend service details
+      kubernetes.core.k8s_info:
+        kind: Service
+        name: frontend-service
+        namespace: "{{ k8s_namespace }}"
+      register: frontend_service
+
+    - name: Display frontend service access information
+      debug:
+        msg: |
+          Frontend Service Type: {{ frontend_service.resources[0].spec.type }}
+          {% if frontend_service.resources[0].spec.type == 'LoadBalancer' %}
+          External IP: {{ frontend_service.resources[0].status.loadBalancer.ingress[0].ip | default('Pending...') }}
+          {% elif frontend_service.resources[0].spec.type == 'NodePort' %}
+          NodePort: {{ frontend_service.resources[0].spec.ports[0].nodePort }}
+          Access via: http://<node-ip>:{{ frontend_service.resources[0].spec.ports[0].nodePort }}
+          {% else %}
+          ClusterIP: {{ frontend_service.resources[0].spec.clusterIP }}
+          Use port-forward: kubectl port-forward -n {{ k8s_namespace }} service/frontend-service 8080:80
+          {% endif %}

@@ -25,26 +25,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        return path.startsWith("/auth/") || path.startsWith("/api/auth/");
+        boolean shouldSkip = path.startsWith("/auth/") || 
+               path.startsWith("/api/auth/") ||
+               (path.startsWith("/api/doctors") && request.getMethod().equals("GET"));
+        System.out.println("=== shouldNotFilter for path: " + path + " = " + shouldSkip);
+        return shouldSkip;
     }
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
+            System.out.println("=== JWT Filter for path: " + request.getServletPath());
             String jwt = getJwtFromRequest(request);
+            System.out.println("JWT present: " + (jwt != null) + ", length: " + (jwt != null ? jwt.length() : 0));
             
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                String username = tokenProvider.getUsernameFromToken(jwt);
+            if (StringUtils.hasText(jwt)) {
+                boolean isValid = tokenProvider.validateToken(jwt);
+                System.out.println("JWT validation result: " + isValid);
                 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (isValid) {
+                    String username = tokenProvider.getUsernameFromToken(jwt);
+                    System.out.println("Username from token: " + username);
+                    
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    System.out.println("Authentication set successfully for user: " + username);
+                }
+            } else {
+                System.out.println("No JWT token found in request");
             }
         } catch (Exception ex) {
+            System.err.println("Error in JWT filter: " + ex.getMessage());
             logger.error("Could not set user authentication in security context", ex);
         }
         
